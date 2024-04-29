@@ -2,69 +2,75 @@
 #include <iostream>
 #include <stack>
 #include <vector>
+#include <random>
 
 struct Disk {
     sf::RectangleShape rect;
     int size;
 };
 
+int num_disks = 4; // default
 
 std::vector<std::stack<Disk>> pegs(3);
-int selectedPeg = -1;
-Disk heldDisk;
-bool isHoldingDisk = false;
-bool gameWon = false;
-bool showMenu = true;
+int selected_peg = -1;
+Disk held_disk;
+bool is_holding_disk = false;
+bool game_won = false;
+bool show_menu = true;
 
 sf::Font font;
 
+std::random_device rd;  // Obtain a random number from hardware
+std::mt19937 gen(rd()); // Seed the generator
+std::uniform_int_distribution<> distrib(0, 255);
 
-Disk createDisk(int size, sf::Color color) {
+
+Disk create_disk(int size) {
     Disk d;
     d.size = size;
     d.rect.setSize(sf::Vector2f(20.f * size, 20.f));
-    d.rect.setFillColor(color);
+    // Use random colors
+    d.rect.setFillColor(sf::Color(distrib(gen), distrib(gen), distrib(gen)));
     d.rect.setOrigin(d.rect.getSize().x / 2, d.rect.getSize().y / 2);
     return d;
 }
 
 
-bool checkWinCondition() {
-    return pegs[0].empty() && pegs[1].empty() && pegs[2].size() == 4;
+bool check_win_condition() {
+    return pegs[0].empty() && pegs[1].empty() && pegs[2].size() == num_disks;
 }
 
 
-sf::Text createText(const std::string& str, int fontSize, float x, float y) {
-    sf::Text text(str, font, fontSize);
+sf::Text create_text(const std::string& str, int font_size, float x, float y) {
+    sf::Text text(str, font, font_size);
     text.setPosition(x, y);
     return text;
 }
 
 
-void resetGame() {
+void reset_game() {
     pegs = std::vector<std::stack<Disk>>(3);
-    pegs[0].push(createDisk(4, sf::Color::Red));
-    pegs[0].push(createDisk(3, sf::Color::Green));
-    pegs[0].push(createDisk(2, sf::Color::Blue));
-    pegs[0].push(createDisk(1, sf::Color::Cyan));
-    isHoldingDisk = false;
+    for (int i = num_disks; i > 0; --i) {
+        pegs[0].push(create_disk(i));
+    }
+    is_holding_disk = false;
 }
 
 
-void handleMenuClicks(sf::RenderWindow& window, const sf::Event& event) {
-    if (!showMenu) return;
+void handle_menu_clicks(sf::RenderWindow& window, const sf::Event& event) {
+    if (!show_menu) return;
 
-    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-    int startX = 310, startY = 210;
+    sf::Vector2i mouse_pos = sf::Mouse::getPosition(window);
+    int start_x = 310, start_y = 210;
     int height = 50;
-    for (int i = 0; i < 3; ++i) {
-        if (mousePos.x >= startX && mousePos.x <= startX + 180 &&
-            mousePos.y >= startY + i * height && mousePos.y <= startY + (i + 1) * height) {
+    for (int i = 0; i < 2; ++i) {
+        if (mouse_pos.x >= start_x && mouse_pos.x <= start_x + 180 &&
+            mouse_pos.y >= start_y + i * height && mouse_pos.y <= start_y + (i + 1) * height) {
             switch (i) {
             case 0: // Start
-                gameWon = false;
-                showMenu = false;
-                resetGame();
+                game_won = false;
+                show_menu = false;
+                reset_game();
                 break;
             case 1: // Exit
                 window.close();
@@ -72,28 +78,54 @@ void handleMenuClicks(sf::RenderWindow& window, const sf::Event& event) {
             }
         }
     }
-}
 
-
-void drawMenu(sf::RenderWindow& window) {
-    if (!showMenu) return;
-
-    sf::RectangleShape menu(sf::Vector2f(200.f, 100.f));
-    menu.setPosition(300.f, 200.f);
-    menu.setFillColor(sf::Color(0, 0, 0, 150));
-    window.draw(menu);
-
-    std::string buttonLabels[3] = { "Start", "Exit" };
-    for (int i = 0; i < 3; i++) {
-        sf::Text text = createText(buttonLabels[i], 20, 310.f, 210.f + i * 50);
-        window.draw(text);
+    // Handle disk control clicks
+    if (mouse_pos.x >= start_x && mouse_pos.x <= start_x + 180) {
+        if (mouse_pos.y >= 360 && mouse_pos.y <= 410) { // "+ Disks"
+            if (num_disks < 6) num_disks++;
+        }
+        else if (mouse_pos.y >= 410 && mouse_pos.y <= 460) { // "- Disks"
+            if (num_disks > 3) num_disks--;
+        }
     }
 }
 
 
+
+void draw_menu(sf::RenderWindow& window) {
+    if (!show_menu) return;
+
+    sf::RectangleShape menu(sf::Vector2f(200.f, 250.f)); // Increased height for better layout
+    menu.setPosition(300.f, 200.f);
+    menu.setFillColor(sf::Color(0, 0, 0, 150));
+    window.draw(menu);
+
+    sf::RectangleShape disk_control_panel(sf::Vector2f(180.f, 100.f)); // New rectangle for disk control
+    disk_control_panel.setPosition(310.f, 310.f);
+    disk_control_panel.setFillColor(sf::Color(100, 100, 100, 150)); // Light gray background
+    window.draw(disk_control_panel);
+
+    std::string button_labels[] = { "Start", "Exit", "+ Disks", "- Disks" };
+    for (int i = 0; i < 2; i++) {
+        sf::Text text = create_text(button_labels[i], 20, 310.f, 210.f + i * 50);
+        window.draw(text);
+    }
+
+    // Draw disk control texts
+    sf::Text plus_text = create_text("+ Disks", 20, 310.f, 360.f);
+    sf::Text minus_text = create_text("- Disks", 20, 310.f, 410.f);
+    window.draw(plus_text);
+    window.draw(minus_text);
+
+    // Display the current number of disks
+    sf::Text disk_count_text = create_text("Disks: " + std::to_string(num_disks), 20, 310.f, 310.f);
+    window.draw(disk_count_text);
+}
+
+
 void draw(sf::RenderWindow& window) {
-    if (showMenu) {
-        drawMenu(window);
+    if (show_menu) {
+        draw_menu(window);
     }
     else {
         sf::RectangleShape base(sf::Vector2f(410.f, 10.f));
@@ -107,26 +139,26 @@ void draw(sf::RenderWindow& window) {
             peg.setPosition(190.f + i * 200.f, 200.f);
             window.draw(peg);
 
-            std::stack<Disk> tempStack;
+            std::stack<Disk> temp_stack;
             while (!pegs[i].empty()) {
-                tempStack.push(pegs[i].top());
+                temp_stack.push(pegs[i].top());
                 pegs[i].pop();
             }
 
             int count = 0;
-            while (!tempStack.empty()) {
-                Disk& d = tempStack.top();
+            while (!temp_stack.empty()) {
+                Disk& d = temp_stack.top();
                 d.rect.setPosition(195.f + i * 200.f, 340.f - count * 30.f);
                 window.draw(d.rect);
                 pegs[i].push(d);
-                tempStack.pop();
+                temp_stack.pop();
                 count++;
             }
         }
 
-        if (isHoldingDisk) {
-            heldDisk.rect.setPosition(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y);
-            window.draw(heldDisk.rect);
+        if (is_holding_disk) {
+            held_disk.rect.setPosition(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y);
+            window.draw(held_disk.rect);
         }
     }
 }
@@ -142,7 +174,7 @@ int main() {
         return 1;
     }
 
-    resetGame();
+    reset_game();
 
     while (window.isOpen()) {
         sf::Event event;
@@ -151,35 +183,35 @@ int main() {
                 window.close();
 
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                if (showMenu) {
-                    handleMenuClicks(window, event);
+                if (show_menu) {
+                    handle_menu_clicks(window, event);
                 }
             }
 
             if (event.type == sf::Event::MouseButtonPressed) {
-                if (event.mouseButton.button == sf::Mouse::Left && !gameWon) {
+                if (event.mouseButton.button == sf::Mouse::Left && !game_won) {
                     int x = event.mouseButton.x;
-                    int pegIndex = (x - 150) / 200; 
-                    if (pegIndex >= 0 && pegIndex < 3) { 
-                        if (!isHoldingDisk && !pegs[pegIndex].empty()) {
-                            heldDisk = pegs[pegIndex].top();
-                            pegs[pegIndex].pop();
-                            isHoldingDisk = true;
-                            selectedPeg = pegIndex;
+                    int peg_index = (x - 150) / 200;
+                    if (peg_index >= 0 && peg_index < 3) {
+                        if (!is_holding_disk && !pegs[peg_index].empty()) {
+                            held_disk = pegs[peg_index].top();
+                            pegs[peg_index].pop();
+                            is_holding_disk = true;
+                            selected_peg = peg_index;
                         }
-                        else if (isHoldingDisk) {
-                            if (pegs[pegIndex].empty() || heldDisk.size < pegs[pegIndex].top().size) {
-                                pegs[pegIndex].push(heldDisk);
-                                isHoldingDisk = false;
-                                if (checkWinCondition()) {
-                                    resetGame();
-                                    gameWon = true;
-                                    showMenu = true;
+                        else if (is_holding_disk) {
+                            if (pegs[peg_index].empty() || held_disk.size < pegs[peg_index].top().size) {
+                                pegs[peg_index].push(held_disk);
+                                is_holding_disk = false;
+                                if (check_win_condition()) {
+                                    reset_game();
+                                    game_won = true;
+                                    show_menu = true;
                                 }
                             }
                             else {
-                                pegs[selectedPeg].push(heldDisk);
-                                isHoldingDisk = false;
+                                pegs[selected_peg].push(held_disk);
+                                is_holding_disk = false;
                             }
                         }
                     }
