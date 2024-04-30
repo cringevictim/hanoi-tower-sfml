@@ -71,16 +71,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>test</TargetName>
+    <TargetName>test2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>test</TargetName>
+    <TargetName>test2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetName>test</TargetName>
+    <TargetName>test2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>test</TargetName>
+    <TargetName>test2</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -151,7 +151,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="disk.cpp" />
+    <ClCompile Include="draw.cpp" />
+    <ClCompile Include="game_logic.cpp" />
+    <ClCompile Include="handle.cpp" />
+    <ClCompile Include="hanoi-tower-sfml.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="disk.h" />
+    <ClInclude Include="draw.h" />
+    <ClInclude Include="game_logic.h" />
+    <ClInclude Include="global.h" />
+    <ClInclude Include="handle.h" />
+    <ClInclude Include="utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
